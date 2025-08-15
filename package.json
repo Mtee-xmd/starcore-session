@@ -1,3 +1,6 @@
+"scripts": {
+    "start": "node index.js"
+}
 {
     "description": "starcore-session",
     "main": "./index.js",
