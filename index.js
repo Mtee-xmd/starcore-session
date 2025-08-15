@@ -1,36 +1,26 @@
 const express = require('express');
-const path = require('path');
 const bodyParser = require("body-parser");
+const path = require('path');
 
-require('events').EventEmitter.defaultMaxListeners = 100; // Reduce to avoid memory leaks
+// Limit max listeners to reduce memory usage
+require('events').EventEmitter.defaultMaxListeners = 100;
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Preload only essential routes to avoid slow startup
-const qrRoute = require('./qr');
-const codeRoute = require('./pair'); // Assuming ./pair handles both /code and /pair logic
+// --- Start server immediately to pass Render port scan ---
+app.listen(PORT, () => {
+    console.log(`✅ Server running at http://localhost:${PORT}`);
+});
 
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes
-app.use('/qr', qrRoute);
-app.use('/code', codeRoute);
+// Routes (load light, avoid blocking)
+app.use('/qr', require('./qr'));       // Session QR route
+app.use('/code', require('./pair'));   // Code generation logic
 
-app.get('/pair', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'pair.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'main.html'));
-});
-
-// Start server quickly (important for Render)
-app.listen(PORT, () => {
-    console.log(`✅ Server running at http://localhost:${PORT}`);
-    console.log(`🚀 Ready for Render on port ${PORT}`);
-});
-
-module.exports = app;
+// Static HTML pages
+app.get('/pair', (req, res) => res.sendFile(path.join(process.cwd(), 'pair.html')));
+app.get('/', (req, res) => res.sendFile(path.join(process.cwd(), 'main.html')));
